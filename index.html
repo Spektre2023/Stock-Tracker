@@ -132,6 +132,46 @@
   footer b{color:var(--muted);}
 
   .collecting{color:var(--faint); font-size:12px; font-style:italic;}
+  .warn{border-color:var(--amber);}
+  .warn .card-pad{font-size:13px; color:var(--ink); line-height:1.5;}
+  .warn b{color:var(--amber);}
+
+  /* Holding */
+  .hold{background:var(--surface-2); border:1px solid var(--hair); border-radius:12px; padding:12px; margin-top:14px;}
+  .hold-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .hold-l{font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--faint);}
+  .hold-sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .hold-val{font-size:22px; font-weight:700; margin:8px 0 2px;}
+  .linkbtn{background:none; border:none; color:var(--amber); font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; cursor:pointer; padding:4px 2px; flex:none;}
+  .addhold{display:block; width:100%; margin-top:14px; background:var(--surface-2); border:1px dashed var(--hair); color:var(--muted); border-radius:12px; padding:13px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; cursor:pointer; min-height:46px;}
+  .holdedit{display:none; background:var(--surface-2); border:1px solid var(--hair); border-radius:12px; padding:12px; margin-top:10px;}
+  .holdedit.show{display:block;}
+  .he-row{display:flex; gap:10px;}
+  .he-row label{flex:1; font-size:11px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0;}
+  .he-row input{background:var(--bg); border:1px solid var(--hair); color:var(--ink); border-radius:10px; padding:10px; font-family:'JetBrains Mono',monospace; font-size:14px; width:100%; min-height:44px;}
+  .he-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .he-actions .btn{font-size:12px; padding:9px 13px; min-height:40px;}
+  .btn.danger{color:var(--down);}
+
+  /* Per-card Details disclosure */
+  details.more{margin-top:14px; border-top:1px solid var(--hair);}
+  details.more summary{list-style:none; cursor:pointer; padding:12px 0 4px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; color:var(--amber); display:flex; align-items:center; gap:7px;}
+  details.more summary::-webkit-details-marker{display:none;}
+  details.more summary:before{content:"▸"; font-size:11px; transition:transform .2s;}
+  details.more[open] summary:before{transform:rotate(90deg);}
+  .more-body{padding-top:4px;}
+
+  /* Glossary */
+  .glossary{padding:0;}
+  .glossary summary{list-style:none; cursor:pointer; padding:15px 16px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px; color:var(--ink); display:flex; align-items:center; gap:8px;}
+  .glossary summary::-webkit-details-marker{display:none;}
+  .glossary summary:before{content:"▸"; color:var(--amber); font-size:12px; transition:transform .2s;}
+  .glossary[open] summary:before{transform:rotate(90deg);}
+  .glossary .card-pad{padding-top:0;}
+  .gterm{padding:9px 0; border-bottom:1px solid var(--hair); font-size:13px; color:var(--muted); line-height:1.5;}
+  .gterm:last-child{border-bottom:none;}
+  .gterm b{color:var(--amber); font-weight:600;}
+
   .hidden{display:none !important;}
 </style>
 </head>
@@ -156,9 +196,14 @@
     <option value="30">30 min</option>
     <option value="60">60 min</option>
   </select>
+  <button class="btn" id="curBtn" title="Switch USD / AUD">USD</button>
   <label class="toggle">Auto
     <span class="switch"><input type="checkbox" id="autoToggle" checked><span class="slider"></span></span>
   </label>
+</div>
+
+<div class="card warn hidden" id="storeWarn">
+  <div class="card-pad"><b>Saved data is being blocked.</b> Your key and watchlist won't stick here — this is almost always a Private / Incognito tab. Open this page in a normal browser tab and everything saves automatically on this phone.</div>
 </div>
 
 <!-- API key onboarding -->
@@ -187,6 +232,22 @@
 
 <div id="cards"></div>
 
+<details class="card glossary">
+  <summary>New here? What these terms mean</summary>
+  <div class="card-pad">
+    <div class="gterm"><b>Today's change</b> — how much the price moved since yesterday's close. Green is up, red is down.</div>
+    <div class="gterm"><b>Your holding</b> — enter how many shares you own and the average price you paid; it shows what they're worth now and whether you're ahead.</div>
+    <div class="gterm"><b>Open / Prev close</b> — the first price today, and yesterday's final price.</div>
+    <div class="gterm"><b>Day high / low</b> — the highest and lowest the price reached today.</div>
+    <div class="gterm"><b>52-week range</b> — the lowest and highest price over the past year. Shows where today sits in the bigger picture.</div>
+    <div class="gterm"><b>Market cap</b> — the company's total value (share price × all shares). A rough measure of size.</div>
+    <div class="gterm"><b>P/E ratio</b> — price compared to profits. A high number means investors are paying a lot for each dollar of earnings, usually signalling high expectations.</div>
+    <div class="gterm"><b>Beta</b> — how jumpy a stock is versus the market. Above 1 means it tends to swing more than average.</div>
+    <div class="gterm"><b>Analyst view</b> — how professional analysts currently rate the stock: buy, hold, or sell.</div>
+    <div class="gterm"><b>Trend projection</b> — the dashed line is a simple straight-line extension of today's movement. It's an illustration, <b>not a prediction</b>.</div>
+  </div>
+</details>
+
 <footer>
   <b>Not financial advice.</b> Prices come from a free public feed and may be delayed up to ~15 minutes — they are not exchange-grade real-time data. The dashed projection is a naive extrapolation of the recent trend for illustration only; it is not a forecast and should not drive decisions. Auto-refresh runs only while this page is open and in front; reopen it to catch up. Data is stored on this device's browser.
   <div style="margin-top:8px;"><button class="btn ghost" id="resetKey" style="font-size:11px; padding:6px 10px; min-height:auto;">Change API key</button></div>
@@ -201,15 +262,20 @@ const LS = {
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
   del(k){ try{ localStorage.removeItem(k);}catch(e){} }
 };
-const KEY_API='apogee_key', KEY_TICKERS='apogee_tickers', KEY_SETTINGS='apogee_settings', KEY_HIST='apogee_hist';
+const KEY_API='apogee_key', KEY_TICKERS='apogee_tickers', KEY_SETTINGS='apogee_settings', KEY_HIST='apogee_hist', KEY_PORT='apogee_portfolio';
+function storageOK(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } }
 
 /* ---------- State ---------- */
 let apiKey = LS.get(KEY_API,'');
 let tickers = LS.get(KEY_TICKERS, ['SPCX']);
-let settings = LS.get(KEY_SETTINGS, {interval:15, auto:true});
+let settings = LS.get(KEY_SETTINGS, {interval:15, auto:true, currency:'USD'});
+if(!settings.currency) settings.currency='USD';
 let history = LS.get(KEY_HIST, {});      // { TICKER: {date:'YYYYMMDD', points:[{t,p}]} }
+let portfolio = LS.get(KEY_PORT, {});    // { TICKER: {shares, cost} }  cost = avg USD price paid
 let store = {};                          // live in-memory: { TICKER: {quote,profile,metric,rec,news,err} }
 let charts = {};
+let detailOpen = new Set();              // which cards have Details expanded
+let fxRate = null;                       // USD -> AUD
 let timer = null;
 let pollCount = 0;
 
@@ -219,6 +285,10 @@ const todayKey = () => { const d=new Date(); return ''+d.getFullYear()+String(d.
 const fmt = (n,d=2) => (n==null||isNaN(n))?'—':Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtCap = m => { if(!m) return '—'; const v=m*1e6; if(v>=1e12)return '$'+(v/1e12).toFixed(2)+'T'; if(v>=1e9)return '$'+(v/1e9).toFixed(1)+'B'; return '$'+(v/1e6).toFixed(0)+'M'; };
 const hhmm = ts => { const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+function cur(){ const aud=(settings.currency==='AUD')&&fxRate; return {sym:aud?'A$':'$', rate:aud?fxRate:1}; }
+function money(usd,d=2){ if(usd==null||isNaN(usd)) return '—'; const c=cur(); return c.sym+fmt(usd*c.rate,d); }
+function fmtCapC(m){ if(!m) return '—'; const c=cur(); const v=m*1e6*c.rate; if(v>=1e12)return c.sym+(v/1e12).toFixed(2)+'T'; if(v>=1e9)return c.sym+(v/1e9).toFixed(1)+'B'; return c.sym+(v/1e6).toFixed(0)+'M'; }
+async function loadFX(){ try{ const r=await fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-store'}); const j=await r.json(); if(j&&j.rates&&j.rates.AUD) fxRate=j.rates.AUD; }catch(e){} }
 
 function marketState(){
   // US market hours in ET, evaluated from the user's local clock via UTC offset of ET.
@@ -307,8 +377,14 @@ function render(){
   const c=$('cards');
   c.innerHTML = tickers.map(sym=>cardHTML(sym)).join('') || '<div class="card"><div class="card-pad msg">No stocks yet. Add a ticker above to start tracking.</div></div>';
 
-  // wire removes
+  // wire interactions
   tickers.forEach(sym=>{ const b=$('rm_'+sym); if(b) b.onclick=()=>removeTicker(sym); });
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{ const e=$('he_'+b.getAttribute('data-edit')); if(e) e.classList.toggle('show'); });
+  document.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>setHolding(b.getAttribute('data-save')));
+  document.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{ const e=$('he_'+b.getAttribute('data-cancel')); if(e) e.classList.remove('show'); });
+  document.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>clearHolding(b.getAttribute('data-clear')));
+  document.querySelectorAll('details.more').forEach(dt=>dt.addEventListener('toggle',()=>{ const s=dt.getAttribute('data-more'); dt.open?detailOpen.add(s):detailOpen.delete(s); }));
+  $('curBtn').textContent = settings.currency||'USD';
   // draw charts
   tickers.forEach(sym=>drawChart(sym));
 }
@@ -331,6 +407,35 @@ function cardHTML(sym){
   const wkH=m['52WeekHigh'], wkL=m['52WeekLow'], pe=m.peTTM||m.peNormalizedAnnual, beta=m.beta;
   const cap=(d.profile&&d.profile.marketCapitalization);
 
+  // ----- Your holding (always-visible, plain language) -----
+  const p=portfolio[sym];
+  let holdHTML;
+  if(p && p.shares>0){
+    const valUSD=p.shares*q.c, costUSD=p.shares*(p.cost||0);
+    const gain=valUSD-costUSD, gpct=costUSD>0?(gain/costUSD*100):0, gUp=gain>=0, gcls=gUp?'up':'down';
+    holdHTML=`<div class="hold">
+      <div class="hold-top">
+        <div><div class="hold-l">Your holding</div><div class="hold-sub">${fmt(p.shares,0)} shares · avg ${money(p.cost)}</div></div>
+        <button class="linkbtn" data-edit="${sym}">Edit</button>
+      </div>
+      <div class="hold-val mono">${money(valUSD)}</div>
+      ${p.cost>0?`<div class="chg ${gcls} mono"><span class="arrow">${gUp?'▲':'▼'}</span> ${gUp?'+':''}${money(gain)} (${gUp?'+':''}${fmt(gpct)}%) since you bought</div>`:''}
+    </div>`;
+  } else {
+    holdHTML=`<button class="addhold" data-edit="${sym}">+ Add what you own</button>`;
+  }
+  const editHTML=`<div class="holdedit" id="he_${sym}">
+    <div class="he-row">
+      <label>Shares<input type="number" inputmode="decimal" id="hs_${sym}" value="${p?p.shares:''}" placeholder="0"></label>
+      <label>Avg price paid (USD)<input type="number" inputmode="decimal" id="hc_${sym}" value="${p&&p.cost?p.cost:''}" placeholder="0.00"></label>
+    </div>
+    <div class="he-actions">
+      <button class="btn primary" data-save="${sym}">Save</button>
+      <button class="btn ghost" data-cancel="${sym}">Cancel</button>
+      ${p?`<button class="btn ghost danger" data-clear="${sym}">Remove</button>`:''}
+    </div>
+  </div>`;
+
   // analyst rec
   let recHTML='';
   if(d.rec){
@@ -347,24 +452,31 @@ function cardHTML(sym){
       <div class="recmeta"><span>${sb+b} buy</span><span>${h} hold</span><span>${s+ss} sell</span></div>`;
     }
   }
-
   // news
   let newsHTML='';
   if(d.news&&d.news.length){
     newsHTML=`<div class="seclabel">Recent news</div><div class="news">`+
       d.news.map(n=>`<a href="${n.url}" target="_blank" rel="noopener">${n.headline}<div class="src">${n.source||''} · ${hhmm(n.datetime*1000)}</div></a>`).join('')+`</div>`;
   }
-
   // projection note
   const hist=(history[sym]&&history[sym].points)||[];
   const proj=linProj(hist,4);
-  let pnote='';
-  if(proj){
-    const dir = proj.slope>0.001?'rising':proj.slope<-0.001?'falling':'flat';
-    pnote=`<div class="pnote">Recent intraday trend is <b>${dir}</b>. The dashed line extends that straight-line trend forward — a <b>naive extrapolation, not a forecast</b>. Real prices rarely move in straight lines.</div>`;
-  } else {
-    pnote=`<div class="pnote collecting">Collecting points — the trend projection appears once enough readings are gathered today.</div>`;
-  }
+  let pnote = proj
+    ? `<div class="pnote">Today's trend is <b>${proj.slope>0.001?'rising':proj.slope<-0.001?'falling':'flat'}</b>. The dashed line just extends that straight line forward — a <b>rough illustration, not a forecast</b>.</div>`
+    : `<div class="pnote collecting">Collecting readings — the trend line appears once enough points are gathered today.</div>`;
+
+  const detailsBody=`
+    <div class="stats">
+      <div class="stat"><div class="l">Open</div><div class="v">${money(q.o)}</div></div>
+      <div class="stat"><div class="l">Prev close</div><div class="v">${money(q.pc)}</div></div>
+      <div class="stat"><div class="l">Day high</div><div class="v">${money(q.h)}</div></div>
+      <div class="stat"><div class="l">Day low</div><div class="v">${money(q.l)}</div></div>
+      <div class="stat"><div class="l">52-wk range</div><div class="v">${wkL?money(wkL,0):'—'} – ${wkH?money(wkH,0):'—'}</div></div>
+      <div class="stat"><div class="l">Market cap</div><div class="v">${fmtCapC(cap)}</div></div>
+      <div class="stat"><div class="l">P/E (TTM)</div><div class="v">${pe?fmt(pe,1):'—'}</div></div>
+      <div class="stat"><div class="l">Beta</div><div class="v">${beta?fmt(beta,2):'—'}</div></div>
+    </div>
+    ${recHTML}${newsHTML}${pnote}`;
 
   return `<div class="card"><div class="card-pad">
     <div class="qhead">
@@ -373,47 +485,40 @@ function cardHTML(sym){
         ${name?`<div class="coname">${name}</div>`:''}
       </div>
     </div>
-    <div class="price mono">$${fmt(q.c)}</div>
-    <div class="chg ${cls} mono"><span class="arrow">${arr}</span> ${up?'+':''}${fmt(q.d)} (${up?'+':''}${fmt(q.dp)}%) today</div>
+    <div class="price mono">${money(q.c)}</div>
+    <div class="chg ${cls} mono"><span class="arrow">${arr}</span> ${up?'+':''}${money(q.d)} (${up?'+':''}${fmt(q.dp)}%) today</div>
+
+    ${holdHTML}
+    ${editHTML}
 
     <div class="chartwrap"><canvas id="cv_${sym}"></canvas></div>
     <div class="chart-legend">
       <span class="lg"><i style="background:var(--amber)"></i> Price today</span>
       <span class="lg"><i class="dash"></i> Trend projection</span>
     </div>
-    ${pnote}
 
-    <div class="stats">
-      <div class="stat"><div class="l">Open</div><div class="v">$${fmt(q.o)}</div></div>
-      <div class="stat"><div class="l">Prev close</div><div class="v">$${fmt(q.pc)}</div></div>
-      <div class="stat"><div class="l">Day high</div><div class="v">$${fmt(q.h)}</div></div>
-      <div class="stat"><div class="l">Day low</div><div class="v">$${fmt(q.l)}</div></div>
-      <div class="stat"><div class="l">52-wk range</div><div class="v">${wkL?'$'+fmt(wkL,0):'—'} – ${wkH?'$'+fmt(wkH,0):'—'}</div></div>
-      <div class="stat"><div class="l">Market cap</div><div class="v">${fmtCap(cap)}</div></div>
-      <div class="stat"><div class="l">P/E (TTM)</div><div class="v">${pe?fmt(pe,1):'—'}</div></div>
-      <div class="stat"><div class="l">Beta</div><div class="v">${beta?fmt(beta,2):'—'}</div></div>
-    </div>
-
-    ${recHTML}
-    ${newsHTML}
+    <details class="more" data-more="${sym}" ${detailOpen.has(sym)?'open':''}>
+      <summary>Details &amp; analysis</summary>
+      <div class="more-body">${detailsBody}</div>
+    </details>
   </div></div>`;
 }
 
 function drawChart(sym){
   const cv=$('cv_'+sym); if(!cv) return;
   if(charts[sym]){ charts[sym].destroy(); }
+  const rate=cur().rate, csym=cur().sym;
   const hist=(history[sym]&&history[sym].points)||[];
   const labels=hist.map(p=>hhmm(p.t));
-  const prices=hist.map(p=>p.p);
+  const prices=hist.map(p=>p.p*rate);
   const proj=linProj(hist,4);
   let projData=null, projLabels=[];
   if(proj){
     const step = (settings.interval||15);
     const lastT = hist.length?hist[hist.length-1].t:Date.now();
     projLabels = proj.values.map((_,i)=>hhmm(lastT+i*step*60000));
-    // align: projection dataset is null across actual points except the last, then future values
     projData = Array(prices.length-1).fill(null);
-    projData = projData.concat(proj.values); // starts at last actual index
+    projData = projData.concat(proj.values.map(v=>v*rate)); // starts at last actual index
   }
   const allLabels = proj ? labels.concat(projLabels.slice(1)) : labels;
 
@@ -433,22 +538,30 @@ function drawChart(sym){
       responsive:true, maintainAspectRatio:false, animation:false,
       plugins:{legend:{display:false}, tooltip:{
         backgroundColor:'#1B2231', borderColor:'#262F42', borderWidth:1, titleColor:'#8A93A6', bodyColor:'#E8ECF4',
-        callbacks:{label:c=>'$'+fmt(c.parsed.y)}
+        callbacks:{label:c=>csym+fmt(c.parsed.y)}
       }},
       scales:{
         x:{ticks:{color:'#5C6679', font:{size:10, family:'JetBrains Mono'}, maxTicksLimit:5}, grid:{display:false}},
-        y:{ticks:{color:'#5C6679', font:{size:10, family:'JetBrains Mono'}, callback:v=>'$'+fmt(v,0)}, grid:{color:'#1B2231'}}
+        y:{ticks:{color:'#5C6679', font:{size:10, family:'JetBrains Mono'}, callback:v=>csym+fmt(v,0)}, grid:{color:'#1B2231'}}
       }
     }
   });
 }
 
 /* ---------- Actions ---------- */
+function setHolding(sym){
+  const sh=parseFloat($('hs_'+sym).value)||0, co=parseFloat($('hc_'+sym).value)||0;
+  if(sh>0){ portfolio[sym]={shares:sh,cost:co}; } else { delete portfolio[sym]; }
+  LS.set(KEY_PORT,portfolio); render();
+}
+function clearHolding(sym){ delete portfolio[sym]; LS.set(KEY_PORT,portfolio); render(); }
+
 async function refreshAll(full){
   if(!apiKey) return;
   pollCount++;
   const doFull = full || pollCount===1 || pollCount%4===0; // heavy data hourly-ish
   $('refreshBtn').textContent='Refreshing…'; $('refreshBtn').disabled=true;
+  if(doFull) await loadFX();
   for(const sym of tickers){ await loadTicker(sym, doFull); }
   $('lastUpdate').textContent='updated '+hhmm(Date.now());
   $('refreshBtn').textContent='Refresh now'; $('refreshBtn').disabled=false;
@@ -490,13 +603,16 @@ $('intervalSel').value=String(settings.interval||15);
 $('intervalSel').onchange=e=>{ settings.interval=+e.target.value; LS.set(KEY_SETTINGS,settings); scheduleTimer(); };
 $('autoToggle').checked=!!settings.auto;
 $('autoToggle').onchange=e=>{ settings.auto=e.target.checked; LS.set(KEY_SETTINGS,settings); scheduleTimer(); };
+$('curBtn').onclick=()=>{ settings.currency=(settings.currency==='AUD')?'USD':'AUD'; LS.set(KEY_SETTINGS,settings); if(settings.currency==='AUD'&&!fxRate){ loadFX().then(render); } render(); };
 
 // Catch up when the user reopens / refocuses the tab (covers iOS background throttling)
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden && apiKey){ refreshAll(false);} });
 
 /* ---------- Init ---------- */
+$('storeWarn').classList.toggle('hidden', storageOK());
 render();
 scheduleTimer();
+loadFX();
 if(apiKey) refreshAll(true);
 </script>
 </body>
