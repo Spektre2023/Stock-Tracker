@@ -172,6 +172,25 @@
   .gterm:last-child{border-bottom:none;}
   .gterm b{color:var(--amber); font-weight:600;}
 
+  /* Alerts */
+  .alertbanner{border-color:var(--amber); background:rgba(245,179,60,.08); padding:14px 16px; position:relative;}
+  .alertbanner b{font-family:'Space Grotesk',sans-serif; color:var(--amber); font-size:14px;}
+  .ab-list{font-size:13px; color:var(--ink); margin-top:6px; line-height:1.6;}
+  .ab-x{position:absolute; top:10px; right:12px; background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;}
+  .alertrow{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px; background:var(--surface-2); border:1px solid var(--hair); border-radius:12px; padding:11px 12px; font-size:13px; color:var(--amber);}
+  .he-hint{font-size:11.5px; color:var(--muted); margin:2px 0 8px;}
+  .pctpresets{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px;}
+  .pct{flex:1; min-width:0; background:var(--bg); border:1px solid var(--hair); color:var(--muted); border-radius:10px; padding:9px 6px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:11.5px; cursor:pointer; white-space:nowrap;}
+  .pct.on{background:var(--amber); color:#1A1206; border-color:var(--amber);}
+  .card.alerted{border-color:var(--amber); box-shadow:0 0 0 1px var(--amber);}
+  .alerted-note{font-size:12.5px; color:var(--amber); margin-top:6px;}
+
+  /* Chart range tabs */
+  .ranges{display:flex; gap:6px; margin-top:14px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px;}
+  .ranges::-webkit-scrollbar{display:none;}
+  .rtab{flex:none; background:var(--surface-2); border:1px solid var(--hair); color:var(--muted); border-radius:9px; padding:7px 13px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:12px; cursor:pointer; min-height:36px;}
+  .rtab.on{background:var(--amber); color:#1A1206; border-color:var(--amber);}
+
   .hidden{display:none !important;}
 </style>
 </head>
@@ -202,6 +221,8 @@
   </label>
 </div>
 
+<div class="card alertbanner hidden" id="alertBanner"></div>
+
 <div class="card warn hidden" id="storeWarn">
   <div class="card-pad"><b>Saved data is being blocked.</b> Your key and watchlist won't stick here — this is almost always a Private / Incognito tab. Open this page in a normal browser tab and everything saves automatically on this phone.</div>
 </div>
@@ -221,6 +242,24 @@
       <button class="btn primary" id="saveKey">Save</button>
     </div>
     <div class="msg" id="keyMsg"></div>
+  </div>
+</div>
+
+<!-- Historical charts key (optional) -->
+<div class="card onboard hidden" id="tdCard">
+  <div class="card-pad">
+    <h2>Add historical charts <span style="color:var(--faint);font-weight:400">· optional</span></h2>
+    <p>Your live feed shows today. To see 1D / 5D / 1M / 6M / 1Y history like a normal stock app, add a free Twelve Data key.</p>
+    <ol>
+      <li>Open <a href="https://twelvedata.com/register" target="_blank" rel="noopener">twelvedata.com/register</a> and sign up free.</li>
+      <li>Copy the API key from your dashboard.</li>
+      <li>Paste it below. Stays on this device only.</li>
+    </ol>
+    <div class="keyrow">
+      <input type="password" id="tdInput" placeholder="Paste Twelve Data key" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="btn primary" id="saveTd">Save</button>
+    </div>
+    <div class="msg" id="tdMsg"></div>
   </div>
 </div>
 
@@ -245,12 +284,14 @@
     <div class="gterm"><b>Beta</b> — how jumpy a stock is versus the market. Above 1 means it tends to swing more than average.</div>
     <div class="gterm"><b>Analyst view</b> — how professional analysts currently rate the stock: buy, hold, or sell.</div>
     <div class="gterm"><b>Trend projection</b> — the dashed line is a simple straight-line extension of today's movement. It's an illustration, <b>not a prediction</b>.</div>
+    <div class="gterm"><b>Chart timeframes</b> — "Live" is the price the app collects itself today (with the projection). 1D/5D/1M/6M/1Y pull real historical data so you can see the bigger picture. A brand-new stock like SPCX will have little history until time passes.</div>
+    <div class="gterm"><b>Price alerts</b> — get flagged when a stock crosses a price you set, or makes a big daily move. The % presets follow market norms: most days a stock moves 1–2% (normal), ~5% is considered a significant day, and ~10% is a major one. Alerts only fire while this page is open.</div>
   </div>
 </details>
 
 <footer>
   <b>Not financial advice.</b> Prices come from a free public feed and may be delayed up to ~15 minutes — they are not exchange-grade real-time data. The dashed projection is a naive extrapolation of the recent trend for illustration only; it is not a forecast and should not drive decisions. Auto-refresh runs only while this page is open and in front; reopen it to catch up. Data is stored on this device's browser.
-  <div style="margin-top:8px;"><button class="btn ghost" id="resetKey" style="font-size:11px; padding:6px 10px; min-height:auto;">Change API key</button></div>
+  <div style="margin-top:8px;"><button class="btn ghost" id="resetKey" style="font-size:11px; padding:6px 10px; min-height:auto;">Change API key</button> <button class="btn ghost" id="resetTd" style="font-size:11px; padding:6px 10px; min-height:auto;">Change history key</button></div>
 </footer>
 
 <script>
@@ -262,7 +303,7 @@ const LS = {
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
   del(k){ try{ localStorage.removeItem(k);}catch(e){} }
 };
-const KEY_API='apogee_key', KEY_TICKERS='apogee_tickers', KEY_SETTINGS='apogee_settings', KEY_HIST='apogee_hist', KEY_PORT='apogee_portfolio';
+const KEY_API='apogee_key', KEY_TICKERS='apogee_tickers', KEY_SETTINGS='apogee_settings', KEY_HIST='apogee_hist', KEY_PORT='apogee_portfolio', KEY_ALERTS='apogee_alerts', KEY_ALERTLOG='apogee_alertlog', KEY_TD='apogee_tdkey';
 function storageOK(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } }
 
 /* ---------- State ---------- */
@@ -272,6 +313,14 @@ let settings = LS.get(KEY_SETTINGS, {interval:15, auto:true, currency:'USD'});
 if(!settings.currency) settings.currency='USD';
 let history = LS.get(KEY_HIST, {});      // { TICKER: {date:'YYYYMMDD', points:[{t,p}]} }
 let portfolio = LS.get(KEY_PORT, {});    // { TICKER: {shares, cost} }  cost = avg USD price paid
+let alerts = LS.get(KEY_ALERTS, {});     // { TICKER: {above, below, pct} }  prices in USD
+let alertLog = LS.get(KEY_ALERTLOG, {date:'', fired:{}});
+let alertMsgs = {};                      // sym -> [currently-true trigger strings] for highlighting
+let tdKey = LS.get(KEY_TD,'');           // Twelve Data key (historical charts)
+let chartRange = {};                     // sym -> selected range ('Live','1D','5D','1M','6M','1Y')
+let tdCache = {};                        // sym -> { range: {at, data:[{label,p}]} }
+let tdLoading = {};                      // sym -> range currently loading
+let tdErr = {};                          // sym -> error string
 let store = {};                          // live in-memory: { TICKER: {quote,profile,metric,rec,news,err} }
 let charts = {};
 let detailOpen = new Set();              // which cards have Details expanded
@@ -367,6 +416,7 @@ function linProj(pts,steps){
 function render(){
   const hasKey=!!apiKey;
   $('keyCard').classList.toggle('hidden',hasKey);
+  $('tdCard').classList.toggle('hidden', !(hasKey && !tdKey));
   $('addRow').classList.toggle('hidden',!hasKey);
   const ms=marketState();
   $('marketState').textContent=ms.label;
@@ -383,6 +433,13 @@ function render(){
   document.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>setHolding(b.getAttribute('data-save')));
   document.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{ const e=$('he_'+b.getAttribute('data-cancel')); if(e) e.classList.remove('show'); });
   document.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>clearHolding(b.getAttribute('data-clear')));
+  document.querySelectorAll('[data-alert]').forEach(b=>b.onclick=()=>{ const e=$('ae_'+b.getAttribute('data-alert')); if(e) e.classList.toggle('show'); });
+  document.querySelectorAll('[data-setpct]').forEach(b=>b.onclick=()=>{ const a=b.getAttribute('data-setpct').split(':'); const c=$('pp_'+a[0]); c.dataset.pct=a[1]; c.querySelectorAll('.pct').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
+  document.querySelectorAll('[data-asave]').forEach(b=>b.onclick=()=>saveAlert(b.getAttribute('data-asave')));
+  document.querySelectorAll('[data-acancel]').forEach(b=>b.onclick=()=>{ const e=$('ae_'+b.getAttribute('data-acancel')); if(e) e.classList.remove('show'); });
+  document.querySelectorAll('[data-aclear]').forEach(b=>b.onclick=()=>clearAlert(b.getAttribute('data-aclear')));
+  tickers.forEach(s=>{ const c=$('pp_'+s); if(c){ const v=c.dataset.pct; c.querySelectorAll('.pct').forEach(x=>{ if(x.getAttribute('data-setpct')===s+':'+v) x.classList.add('on'); }); } });
+  document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{ const a=b.getAttribute('data-range').split(':'); setRange(a[0],a[1]); });
   document.querySelectorAll('details.more').forEach(dt=>dt.addEventListener('toggle',()=>{ const s=dt.getAttribute('data-more'); dt.open?detailOpen.add(s):detailOpen.delete(s); }));
   $('curBtn').textContent = settings.currency||'USD';
   // draw charts
@@ -478,7 +535,39 @@ function cardHTML(sym){
     </div>
     ${recHTML}${newsHTML}${pnote}`;
 
-  return `<div class="card"><div class="card-pad">
+  // ----- Alerts -----
+  const al=alerts[sym];
+  let alertSummary;
+  if(al && (al.above||al.below||al.pct)){
+    const parts=[];
+    if(al.above) parts.push('above $'+fmt(al.above));
+    if(al.below) parts.push('below $'+fmt(al.below));
+    if(al.pct) parts.push('±'+al.pct+'% day');
+    alertSummary=`<div class="alertrow"><span>🔔 ${parts.join(' · ')}</span><button class="linkbtn" data-alert="${sym}">Edit</button></div>`;
+  } else {
+    alertSummary=`<button class="addhold" data-alert="${sym}">🔔 Set a price alert</button>`;
+  }
+  const alertEdit=`<div class="holdedit" id="ae_${sym}">
+    <div class="he-hint">Alert me when ${sym}…</div>
+    <div class="he-row">
+      <label>Rises above (USD)<input type="number" inputmode="decimal" id="aa_${sym}" value="${al&&al.above?al.above:''}" placeholder="—"></label>
+      <label>Falls below (USD)<input type="number" inputmode="decimal" id="ab_${sym}" value="${al&&al.below?al.below:''}" placeholder="—"></label>
+    </div>
+    <div class="he-hint">…or it makes a big move today:</div>
+    <div class="pctpresets" id="pp_${sym}" data-pct="${al&&al.pct?al.pct:0}">
+      <button class="pct" data-setpct="${sym}:2">2% · notable</button>
+      <button class="pct" data-setpct="${sym}:5">5% · significant</button>
+      <button class="pct" data-setpct="${sym}:10">10% · major</button>
+      <button class="pct" data-setpct="${sym}:0">off</button>
+    </div>
+    <div class="he-actions">
+      <button class="btn primary" data-asave="${sym}">Save alert</button>
+      <button class="btn ghost" data-acancel="${sym}">Cancel</button>
+      ${al?`<button class="btn ghost danger" data-aclear="${sym}">Clear</button>`:''}
+    </div>
+  </div>`;
+
+  return `<div class="card${alertMsgs[sym]?' alerted':''}"><div class="card-pad">
     <div class="qhead">
       <div class="qname">
         <div class="ticker">${sym}<button class="remove" id="rm_${sym}">×</button></div>
@@ -487,15 +576,24 @@ function cardHTML(sym){
     </div>
     <div class="price mono">${money(q.c)}</div>
     <div class="chg ${cls} mono"><span class="arrow">${arr}</span> ${up?'+':''}${money(q.d)} (${up?'+':''}${fmt(q.dp)}%) today</div>
+    ${alertMsgs[sym]?`<div class="alerted-note">🔔 ${alertMsgs[sym].join(' · ')}</div>`:''}
 
     ${holdHTML}
     ${editHTML}
+    ${alertSummary}
+    ${alertEdit}
 
+    <div class="ranges">
+      ${['Live','1D','5D','1M','6M','1Y'].map(r=>`<button class="rtab ${(chartRange[sym]||'Live')===r?'on':''}" data-range="${sym}:${r}">${r}</button>`).join('')}
+    </div>
     <div class="chartwrap"><canvas id="cv_${sym}"></canvas></div>
     <div class="chart-legend">
-      <span class="lg"><i style="background:var(--amber)"></i> Price today</span>
-      <span class="lg"><i class="dash"></i> Trend projection</span>
+      <span class="lg"><i style="background:var(--amber)"></i> ${(chartRange[sym]&&chartRange[sym]!=='Live')?chartRange[sym]+' history':'Price today'}</span>
+      ${(!chartRange[sym]||chartRange[sym]==='Live')?'<span class="lg"><i class="dash"></i> Trend projection</span>':''}
     </div>
+    ${(chartRange[sym]&&chartRange[sym]!=='Live'&&!tdKey)?'<div class="msg" style="font-size:12px">Add a free Twelve Data key (card at top) to load history.</div>':''}
+    ${tdLoading[sym]?`<div class="msg">Loading ${tdLoading[sym]} history…</div>`:''}
+    ${(tdErr[sym]&&chartRange[sym]&&chartRange[sym]!=='Live')?`<div class="msg err">${tdErr[sym]}</div>`:''}
 
     <details class="more" data-more="${sym}" ${detailOpen.has(sym)?'open':''}>
       <summary>Details &amp; analysis</summary>
@@ -508,19 +606,27 @@ function drawChart(sym){
   const cv=$('cv_'+sym); if(!cv) return;
   if(charts[sym]){ charts[sym].destroy(); }
   const rate=cur().rate, csym=cur().sym;
-  const hist=(history[sym]&&history[sym].points)||[];
-  const labels=hist.map(p=>hhmm(p.t));
-  const prices=hist.map(p=>p.p*rate);
-  const proj=linProj(hist,4);
-  let projData=null, projLabels=[];
-  if(proj){
-    const step = (settings.interval||15);
-    const lastT = hist.length?hist[hist.length-1].t:Date.now();
-    projLabels = proj.values.map((_,i)=>hhmm(lastT+i*step*60000));
-    projData = Array(prices.length-1).fill(null);
-    projData = projData.concat(proj.values.map(v=>v*rate)); // starts at last actual index
+  const range=chartRange[sym]||'Live';
+  let labels=[], prices=[], projData=null;
+
+  if(range==='Live'){
+    const hist=(history[sym]&&history[sym].points)||[];
+    labels=hist.map(p=>hhmm(p.t));
+    prices=hist.map(p=>p.p*rate);
+    const proj=linProj(hist,4);
+    if(proj){
+      const step=(settings.interval||15), lastT=hist.length?hist[hist.length-1].t:Date.now();
+      const projLabels=proj.values.map((_,i)=>hhmm(lastT+i*step*60000));
+      projData=Array(prices.length-1).fill(null).concat(proj.values.map(v=>v*rate));
+      labels=labels.concat(projLabels.slice(1));
+    }
+  } else {
+    const c=tdCache[sym]&&tdCache[sym][range];
+    if(!c) return; // not loaded yet; a note is shown in the card
+    const intraday=(range==='1D'||range==='5D');
+    labels=c.data.map(d=>{ const s=d.label; return intraday?(range==='5D'?s.slice(5,10)+' '+s.slice(11,16):s.slice(11,16)):s.slice(5,10); });
+    prices=c.data.map(d=>d.p*rate);
   }
-  const allLabels = proj ? labels.concat(projLabels.slice(1)) : labels;
 
   const ds=[{
     label:'Price', data:prices, borderColor:'#F5B33C', backgroundColor:'rgba(245,179,60,.10)',
@@ -533,7 +639,7 @@ function drawChart(sym){
 
   charts[sym]=new Chart(cv.getContext('2d'),{
     type:'line',
-    data:{labels:allLabels, datasets:ds},
+    data:{labels, datasets:ds},
     options:{
       responsive:true, maintainAspectRatio:false, animation:false,
       plugins:{legend:{display:false}, tooltip:{
@@ -548,6 +654,30 @@ function drawChart(sym){
   });
 }
 
+/* ---------- Historical data (Twelve Data) ---------- */
+const TD_RANGE={ '1D':{interval:'5min',outputsize:100}, '5D':{interval:'30min',outputsize:120}, '1M':{interval:'1day',outputsize:30}, '6M':{interval:'1day',outputsize:140}, '1Y':{interval:'1day',outputsize:260} };
+async function tdSeries(sym,range){
+  const r=TD_RANGE[range];
+  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${r.interval}&outputsize=${r.outputsize}&apikey=${encodeURIComponent(tdKey)}`;
+  let res; try{ res=await fetch(url,{cache:'no-store'}); }catch(e){ throw new Error('Couldn’t reach the history feed.'); }
+  const j=await res.json();
+  if(!j || j.status!=='ok' || !Array.isArray(j.values) || !j.values.length){
+    throw new Error((j&&j.message)?j.message:'No history available for '+sym+' yet.');
+  }
+  return j.values.map(v=>({label:v.datetime, p:parseFloat(v.close)})).reverse();
+}
+function setRange(sym,range){
+  chartRange[sym]=range; tdErr[sym]=null;
+  if(range==='Live'){ render(); return; }
+  if(!tdKey){ render(); return; }
+  const c=tdCache[sym]&&tdCache[sym][range];
+  if(c && (Date.now()-c.at < 5*60000)){ render(); return; }
+  tdLoading[sym]=range; render();
+  tdSeries(sym,range)
+    .then(data=>{ tdCache[sym]=tdCache[sym]||{}; tdCache[sym][range]={at:Date.now(),data}; tdLoading[sym]=null; render(); })
+    .catch(e=>{ tdErr[sym]=e.message; tdLoading[sym]=null; render(); });
+}
+
 /* ---------- Actions ---------- */
 function setHolding(sym){
   const sh=parseFloat($('hs_'+sym).value)||0, co=parseFloat($('hc_'+sym).value)||0;
@@ -556,6 +686,48 @@ function setHolding(sym){
 }
 function clearHolding(sym){ delete portfolio[sym]; LS.set(KEY_PORT,portfolio); render(); }
 
+function saveAlert(sym){
+  const above=parseFloat($('aa_'+sym).value)||0, below=parseFloat($('ab_'+sym).value)||0;
+  const c=$('pp_'+sym), pct=c?parseFloat(c.dataset.pct)||0:0;
+  if(above||below||pct){ alerts[sym]={above:above||null,below:below||null,pct:pct||null}; } else { delete alerts[sym]; }
+  LS.set(KEY_ALERTS,alerts);
+  Object.keys(alertLog.fired).forEach(k=>{ if(k.indexOf(sym+'|')===0) delete alertLog.fired[k]; }); // let new thresholds fire today
+  LS.set(KEY_ALERTLOG,alertLog);
+  if('Notification' in window && Notification.permission==='default'){ try{ Notification.requestPermission(); }catch(e){} }
+  evalAlerts(); render();
+}
+function clearAlert(sym){ delete alerts[sym]; LS.set(KEY_ALERTS,alerts); render(); }
+
+function notify(body){ try{ if('Notification' in window && Notification.permission==='granted') new Notification('Apogee alert', {body}); }catch(e){} }
+
+function evalAlerts(){
+  const tk=todayKey();
+  if(alertLog.date!==tk){ alertLog={date:tk,fired:{}}; }
+  alertMsgs={};
+  const fresh=[];
+  for(const sym of tickers){
+    const a=alerts[sym], d=store[sym];
+    if(!a||!d||!d.quote) continue;
+    const q=d.quote, checks=[];
+    if(a.above && q.c>=a.above) checks.push(['above',`${sym} rose above $${fmt(a.above)} (now $${fmt(q.c)})`]);
+    if(a.below && q.c<=a.below) checks.push(['below',`${sym} fell below $${fmt(a.below)} (now $${fmt(q.c)})`]);
+    if(a.pct && Math.abs(q.dp)>=a.pct) checks.push(['pct',`${sym} moved ${fmt(q.dp)}% today (≥ ${a.pct}%)`]);
+    if(checks.length){
+      alertMsgs[sym]=checks.map(c=>c[1].replace(sym+' ',''));
+      checks.forEach(c=>{ const key=sym+'|'+c[0]; if(!alertLog.fired[key]){ alertLog.fired[key]=true; fresh.push(c[1]); } });
+    }
+  }
+  LS.set(KEY_ALERTLOG,alertLog);
+  if(fresh.length){ showAlertBanner(fresh); fresh.forEach(notify); }
+}
+
+function showAlertBanner(list){
+  const el=$('alertBanner');
+  el.innerHTML=`<button class="ab-x" id="abX">×</button><b>🔔 Alert triggered</b><div class="ab-list">${list.map(s=>'• '+s).join('<br>')}</div>`;
+  el.classList.remove('hidden');
+  $('abX').onclick=()=>el.classList.add('hidden');
+}
+
 async function refreshAll(full){
   if(!apiKey) return;
   pollCount++;
@@ -563,6 +735,7 @@ async function refreshAll(full){
   $('refreshBtn').textContent='Refreshing…'; $('refreshBtn').disabled=true;
   if(doFull) await loadFX();
   for(const sym of tickers){ await loadTicker(sym, doFull); }
+  evalAlerts();
   $('lastUpdate').textContent='updated '+hhmm(Date.now());
   $('refreshBtn').textContent='Refresh now'; $('refreshBtn').disabled=false;
   render();
@@ -595,6 +768,8 @@ $('saveKey').onclick=()=>{
   render(); scheduleTimer(); refreshAll(true);
 };
 $('resetKey').onclick=()=>{ apiKey=''; LS.del(KEY_API); store={}; render(); scheduleTimer(); };
+$('saveTd').onclick=()=>{ const v=$('tdInput').value.trim(); if(!v){ $('tdMsg').textContent='Paste your key first.'; return; } tdKey=v; LS.set(KEY_TD,v); $('tdMsg').textContent=''; render(); };
+$('resetTd').onclick=()=>{ tdKey=''; LS.del(KEY_TD); tdCache={}; Object.keys(chartRange).forEach(s=>chartRange[s]='Live'); render(); };
 $('refreshBtn').onclick=()=>refreshAll(true);
 $('addBtn').onclick=addTicker;
 $('addInput').addEventListener('keydown',e=>{if(e.key==='Enter')addTicker();});
